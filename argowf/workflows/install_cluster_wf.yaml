@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: go-programs-
+spec:
+  entrypoint: main-dag
+  volumes:
+    - name: go-programs
+      configMap:
+        name: go-programs
+  templates:
+    - name: main-dag
+      dag:
+        tasks:
+          - name: install-cluster
+            template: run-go-program
+            arguments:
+              parameters: [{ name: program, value: "install_cluster.go" }]
+          - name: run-apps
+            template: run-go-program
+            arguments:
+              parameters: [{ name: program, value: "run_apps.go" }]
+            dependencies: [install-cluster]
+
+    - name: run-go-program
+      inputs:
+        parameters:
+          - name: program
+      container:
+        image: golang:1.20
+        command: [sh, -c]
+        args:
+          - |
+            echo "Running {{inputs.parameters.program}}..."
+            cp /go-programs/{{inputs.parameters.program}} /tmp/{{inputs.parameters.program}}
+            cd /tmp
+            go run {{inputs.parameters.program}}
+        volumeMounts:
+          - name: go-programs
+            mountPath: /go-programs

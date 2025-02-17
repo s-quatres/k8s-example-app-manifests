@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: go-programs
+data:
+  install_cluster.go: |
+    package main
+    import "fmt"
+    func main() {
+      fmt.Println("Installed cluster")
+    }
+  run_apps.go: |
+    package main
+    import "fmt"
+    func main() {
+      fmt.Println("Started apps.")
+    }
