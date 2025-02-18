@@ -21,7 +21,7 @@ jobs:
       - name: Build and tag image
         directory: argowf/workflows
         run: |
-          docker build -t $IMAGE_NAME:latest -f argowf/workflows/Containerfile .
+          docker build -t $IMAGE_NAME:latest -f Containerfile .
 
       - name: Push image to GHCR
         directory: argowf/workflows
