@@ -3,38 +3,40 @@ kind: Workflow
 metadata:
   generateName: go-programs-
 spec:
-  entrypoint: main-dag
-  volumes:
-    - name: go-programs
-      configMap:
-        name: go-programs
+  serviceAccountName: argo-workflow
+  arguments:
+    parameters:
+      - name: target
+        value: "hello2-step"
+  entrypoint: dag-workflow
   templates:
-    - name: main-dag
+    - name: dag-workflow
       dag:
         tasks:
-          - name: install-cluster
-            template: run-go-program
-            arguments:
-              parameters: [{ name: program, value: "install_cluster.go" }]
-          - name: run-apps
-            template: run-go-program
-            arguments:
-              parameters: [{ name: program, value: "run_apps.go" }]
-            dependencies: [install-cluster]
+          - name: hello1-step
+            template: hello1-step
+          - name: hello2-step
+            template: hello2-step
 
-    - name: run-go-program
-      inputs:
-        parameters:
-          - name: program
+    - name: hello1-step
       container:
-        image: golang:1.20
-        command: [sh, -c]
-        args:
-          - |
-            echo "Running {{inputs.parameters.program}}..."
-            cp /go-programs/{{inputs.parameters.program}} /tmp/{{inputs.parameters.program}}
-            cd /tmp
-            go run {{inputs.parameters.program}}
-        volumeMounts:
-          - name: go-programs
-            mountPath: /go-programs
+        image: ghcr.io/s-quatres/go-wf-steps:latest
+        env:
+          - name: GO_RUN
+            value: "hello1"
+
+    - name: hello2-step
+      container:
+        image: ghcr.io/s-quatres/go-wf-steps:latest
+        env:
+          - name: GO_RUN
+            value: "hello2"
+      when: "{{workflow.parameters.target}} == hello2-step"
+
+    - name: hello3-step
+      container:
+        image: ghcr.io/s-quatres/go-wf-steps:latest
+        env:
+          - name: GO_RUN
+            value: "hello3"
+      when: "{{workflow.parameters.target}} == hello3-step"
