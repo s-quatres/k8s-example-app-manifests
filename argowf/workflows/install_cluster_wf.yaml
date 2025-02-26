@@ -7,17 +7,33 @@ spec:
   arguments:
     parameters:
       - name: target
-        value: "hello2-step"
+        value: hello3-step
   entrypoint: dag-workflow
   templates:
     - name: dag-workflow
+      inputs:
+        parameters:
+          - name: target
       dag:
         tasks:
+          - name: hello
+            template: hello
           - name: hello1-step
             template: hello1-step
           - name: hello2-step
             template: hello2-step
+            when: "{{inputs.parameters.target}} == hello3-step"
+            depends: hello1-step
+          - name: hello3-step
+            template: hello3-step
+            #when: "{{workflow.parameters.target}} == hello3-step"
+            depends: hello1-step
 
+    - name: hello
+      container:
+        image: busybox
+        command: [echo]
+        args: ["{{workflow.parameters.target}}"]
     - name: hello1-step
       container:
         image: ghcr.io/s-quatres/go-wf-steps:latest
@@ -31,7 +47,6 @@ spec:
         env:
           - name: GO_RUN
             value: "hello2"
-      when: "{{workflow.parameters.target}} == hello2-step"
 
     - name: hello3-step
       container:
@@ -39,4 +54,3 @@ spec:
         env:
           - name: GO_RUN
             value: "hello3"
-      when: "{{workflow.parameters.target}} == hello3-step"
